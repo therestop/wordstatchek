@@ -91,6 +91,20 @@ public sealed class CoreTests
         Assert.Equal(["Все", "Ненулевые", "Нулевые", "Ошибки"], workbook.Worksheets.Select(x => x.Name));
     }
 
+    [Fact]
+    public void RegionCatalog_ParsesOnlyAvailableRegionsWithHierarchy()
+    {
+        const string html = """
+            <script>Client.default({}, {"regions":{"acceptableRegionValues":["225","213","all"],"tree":[{"value":"225","label":"Россия","children":[{"value":"213","label":"Москва","children":null},{"value":"999","label":"Скрытый","children":null}]}]}});</script>
+            """;
+
+        var regions = RegionCatalog.ParseWordstatPage(html);
+
+        Assert.Equal(2, regions.Count);
+        Assert.Contains(regions, item => item.Id == "213" && item.Path == "Россия / Москва");
+        Assert.DoesNotContain(regions, item => item.Id is "999" or "all");
+    }
+
     private static HttpResponseMessage Response(HttpStatusCode status, string json) => new(status)
     {
         Content = new StringContent(json, Encoding.UTF8, "application/json")

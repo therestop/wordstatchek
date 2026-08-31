@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>WORDSTATCHEK</AssemblyName>
+    <Version>1.1.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\WordstatCheck.Core\WordstatCheck.Core.csproj" />

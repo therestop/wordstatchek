@@ -54,7 +54,12 @@
             <TextBox x:Name="FolderIdBox" />
 
             <TextBlock Text="Регионы" FontWeight="SemiBold" Margin="0,18,0,6" />
-            <TextBox x:Name="RegionsBox" ToolTip="ID регионов через запятую; пусто — без фильтра" />
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="8" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <TextBox x:Name="RegionsSummaryBox" Grid.Column="0" Text="Все регионы" IsReadOnly="True" IsTabStop="False" ToolTip="Выбранные регионы" />
+              <Button x:Name="ChooseRegionsButton" Grid.Column="2" Content="Выбрать" Click="ChooseRegions_Click" IsEnabled="False" />
+            </Grid>
+            <TextBlock x:Name="RegionsHintText" Text="Загружаем каталог Wordstat…" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap" />
 
             <TextBlock Text="Устройство" FontWeight="SemiBold" Margin="0,18,0,6" />
             <ComboBox x:Name="DeviceBox" MinHeight="40" Padding="8" SelectedIndex="0">

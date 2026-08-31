@@ -12,6 +12,8 @@ namespace WordstatCheck.Desktop;
 public partial class MainWindow : Window
 {
     private readonly ObservableCollection<string> activity = [];
+    private IReadOnlyList<RegionOption> availableRegions = [];
+    private IReadOnlyList<RegionOption> selectedRegions = [];
     private CancellationTokenSource? cancellation;
 
     public MainWindow()
@@ -21,6 +23,47 @@ public partial class MainWindow : Window
         ApiKeyBox.Password = Environment.GetEnvironmentVariable("YANDEX_SEARCH_API_KEY") ?? "";
         FolderIdBox.Text = Environment.GetEnvironmentVariable("YANDEX_FOLDER_ID") ?? "";
         OutputPathBox.Text = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "WORDSTATCHEK Results");
+        Loaded += MainWindow_Loaded;
+    }
+
+    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+            var cache = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "therestop",
+                "WORDSTATCHEK",
+                "regions.ru.json");
+            var result = await new RegionCatalog(http, cache).LoadAsync();
+            availableRegions = result.Regions;
+            ChooseRegionsButton.IsEnabled = true;
+            RegionsHintText.Text = result.IsFallback
+                ? "Показан базовый список: полный каталог Wordstat временно недоступен."
+                : $"Доступно регионов: {availableRegions.Count}. Можно выбрать несколько.";
+        }
+        catch (Exception error)
+        {
+            RegionsHintText.Text = $"Не удалось загрузить регионы: {error.Message}";
+        }
+    }
+
+    private void ChooseRegions_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new RegionPickerWindow(availableRegions, selectedRegions.Select(item => item.Id)) { Owner = this };
+        if (dialog.ShowDialog() != true) return;
+        selectedRegions = dialog.SelectedRegions;
+        RegionsSummaryBox.Text = selectedRegions.Count switch
+        {
+            0 => "Все регионы",
+            1 => selectedRegions[0].Name,
+            <= 3 => string.Join(", ", selectedRegions.Select(item => item.Name)),
+            _ => $"Выбрано регионов: {selectedRegions.Count}"
+        };
+        RegionsSummaryBox.ToolTip = selectedRegions.Count == 0
+            ? "Без регионального фильтра"
+            : string.Join(Environment.NewLine, selectedRegions.Select(item => $"{item.Name} (ID {item.Id})"));
     }
 
     private void ChooseInput_Click(object sender, RoutedEventArgs e)
@@ -47,15 +90,13 @@ public partial class MainWindow : Window
             if (phrases.Count == 0) throw new InvalidDataException("Во входном файле нет фраз.");
             var output = OutputPathBox.Text;
             Directory.CreateDirectory(output);
-            var regions = RegionsBox.Text
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var device = (DeviceBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             var options = new WordstatOptions
             {
                 ApiKey = ApiKeyBox.Password,
                 FolderId = FolderIdBox.Text,
                 NumPhrases = 1,
-                Regions = regions,
+                Regions = selectedRegions.Select(item => item.Id).ToArray(),
                 Devices = string.IsNullOrWhiteSpace(device) ? [] : [device]
             };
             using var http = new HttpClient();
@@ -141,7 +182,7 @@ public partial class MainWindow : Window
         OutputPathBox.IsEnabled = !running;
         ApiKeyBox.IsEnabled = !running;
         FolderIdBox.IsEnabled = !running;
-        RegionsBox.IsEnabled = !running;
+        ChooseRegionsButton.IsEnabled = !running && availableRegions.Count > 0;
         DeviceBox.IsEnabled = !running;
     }
 }
