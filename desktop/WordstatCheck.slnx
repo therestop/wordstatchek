@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WordstatCheck.Core/WordstatCheck.Core.csproj" />
+    <Project Path="src/WordstatCheck.Desktop/WordstatCheck.Desktop.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WordstatCheck.Tests/WordstatCheck.Tests.csproj" />
+  </Folder>
+</Solution>
+
