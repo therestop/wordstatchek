@@ -1,0 +1,1 @@
+"""WORDSTATCHEK web service."""

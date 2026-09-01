@@ -12,5 +12,8 @@ results/
 *.checkpoint.json
 *.jsonl
 .env
+.keys/
+web/.env
+.keys/
 *.user
 *.suo
